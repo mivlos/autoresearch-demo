@@ -9,6 +9,7 @@ import {
   Sparkle,
   ArrowsClockwise,
   RocketLaunch,
+  Clock,
 } from "@phosphor-icons/react";
 
 import PromptSection from "@/components/PromptSection";
@@ -25,13 +26,13 @@ import OptimiseRerun from "@/components/stages/OptimiseRerun";
 import Ship from "@/components/stages/Ship";
 
 const STAGES = [
-  { title: "Designing Research", icon: Brain, thinkText: "Designing research methodology", thinkMs: 2500 },
-  { title: "Recruiting Participants", icon: UsersThree, thinkText: "Connecting to recruitment panel", thinkMs: 2000 },
-  { title: "Generating Test Materials", icon: PaintBrush, thinkText: "Generating stimuli with Creative API", thinkMs: 1800 },
-  { title: "Running Study", icon: PlayCircle, thinkText: "Launching unmoderated sessions", thinkMs: 2000 },
-  { title: "Synthesising Results", icon: Sparkle, thinkText: "Analysing 20 sessions with AI", thinkMs: 2500 },
-  { title: "Optimising & Validating", icon: ArrowsClockwise, thinkText: "Generating optimised variant", thinkMs: 2000 },
-  { title: "Shipping", icon: RocketLaunch, thinkText: "Deploying to production", thinkMs: 1500 },
+  { title: "Designing Research", icon: Brain, thinkText: "Designing research methodology", thinkMs: 500 },
+  { title: "Recruiting Participants", icon: UsersThree, thinkText: "Connecting to recruitment panel", thinkMs: 500 },
+  { title: "Generating Test Materials", icon: PaintBrush, thinkText: "Generating stimuli with Creative API", thinkMs: 500 },
+  { title: "Running Study", icon: PlayCircle, thinkText: "Launching unmoderated sessions", thinkMs: 500 },
+  { title: "Synthesising Results", icon: Sparkle, thinkText: "Analysing 20 sessions with AI", thinkMs: 500 },
+  { title: "Optimising & Validating", icon: ArrowsClockwise, thinkText: "Generating optimised variant", thinkMs: 500 },
+  { title: "Shipping", icon: RocketLaunch, thinkText: "Deploying to production", thinkMs: 500 },
 ];
 
 const STAGE_COMPONENTS = [
@@ -44,8 +45,30 @@ const STAGE_COMPONENTS = [
   Ship,
 ];
 
-// Delays between stages (ms after previous stage completes thinking)
-const STAGE_DELAYS = [0, 1500, 1200, 1500, 1500, 1200, 1000];
+// Realistic elapsed times for each stage
+const TIME_ELAPSED = [
+  "~30 seconds",
+  "~4 hours (auto-scheduled)",
+  "~12 seconds",
+  "~4 hours (async, unattended)",
+  "~3 minutes",
+  "~2.5 hours (generate + validate)",
+  "~45 seconds",
+];
+
+// Cumulative time labels after each stage completes
+const CUMULATIVE_TIMES = [
+  "~30 seconds",
+  "~4 hours",
+  "~4 hours",
+  "~8 hours",
+  "~8 hours",
+  "~10.5 hours",
+  "~11 hours",
+];
+
+// Delays between stages (ms) — kept short for snappy demo flow
+const STAGE_DELAYS = [0, 700, 700, 700, 700, 700, 700];
 
 export default function Home() {
   const [prompt, setPrompt] = useState("Test this landing page concept with 20 Gen Z users in the US");
@@ -53,6 +76,7 @@ export default function Home() {
   const [activeStages, setActiveStages] = useState<boolean[]>(new Array(7).fill(false));
   const [completedStages, setCompletedStages] = useState<boolean[]>(new Array(7).fill(false));
   const [pipelineComplete, setPipelineComplete] = useState(false);
+  const [currentCumulativeTime, setCurrentCumulativeTime] = useState("");
   const pipelineRef = useRef<HTMLDivElement>(null);
 
   const activateStage = useCallback((index: number) => {
@@ -69,6 +93,7 @@ export default function Home() {
       next[index] = true;
       return next;
     });
+    setCurrentCumulativeTime(CUMULATIVE_TIMES[index]);
     // Activate next stage after delay
     if (index < 6) {
       setTimeout(() => activateStage(index + 1), STAGE_DELAYS[index + 1]);
@@ -83,13 +108,15 @@ export default function Home() {
     setActiveStages(new Array(7).fill(false));
     setCompletedStages(new Array(7).fill(false));
     setPipelineComplete(false);
+    setCurrentCumulativeTime("");
     // Start first stage
     setTimeout(() => {
       activateStage(0);
-      // Scroll to pipeline
       pipelineRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 500);
   };
+
+  const completedCount = completedStages.filter(Boolean).length;
 
   return (
     <main className="min-h-screen gradient-bg grid-pattern">
@@ -120,6 +147,36 @@ export default function Home() {
               <div className="text-sm text-foreground/90 font-medium">&ldquo;{prompt}&rdquo;</div>
             </motion.div>
 
+            {/* Running total elapsed time */}
+            <AnimatePresence>
+              {completedCount > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 flex items-center justify-between px-4 py-3 rounded-xl bg-accent/5 border border-accent/20"
+                >
+                  <div className="flex items-center gap-2">
+                    <Clock weight="duotone" className="w-4 h-4 text-accent" />
+                    <span className="text-xs font-mono text-accent">
+                      Total elapsed: {currentCumulativeTime}
+                    </span>
+                    {pipelineComplete && (
+                      <span className="text-xs text-accent/70 ml-1">(fully autonomous)</span>
+                    )}
+                  </div>
+                  {pipelineComplete && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-xs font-mono text-muted/60"
+                    >
+                      vs ~3 weeks (manual coordination)
+                    </motion.span>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="space-y-4">
               {STAGES.map((stage, i) => {
                 const StageContent = STAGE_COMPONENTS[i];
@@ -133,6 +190,7 @@ export default function Home() {
                     completed={completedStages[i]}
                     thinkingText={stage.thinkText}
                     thinkDuration={stage.thinkMs}
+                    timeElapsed={TIME_ELAPSED[i]}
                     onComplete={() => completeStage(i)}
                   >
                     <StageContent />

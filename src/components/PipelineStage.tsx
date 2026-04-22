@@ -1,6 +1,6 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect, ReactNode, cloneElement, isValidElement } from "react";
 import TypingIndicator from "./TypingIndicator";
 
 interface PipelineStageProps {
@@ -11,6 +11,7 @@ interface PipelineStageProps {
   icon: ReactNode;
   thinkingText?: string;
   thinkDuration?: number;
+  timeElapsed?: string;
   children: ReactNode;
   onComplete?: () => void;
 }
@@ -22,7 +23,8 @@ export default function PipelineStage({
   title,
   icon,
   thinkingText = "Processing",
-  thinkDuration = 2000,
+  thinkDuration = 500,
+  timeElapsed,
   children,
   onComplete,
 }: PipelineStageProps) {
@@ -33,10 +35,14 @@ export default function PipelineStage({
     setThinking(true);
     const timer = setTimeout(() => {
       setThinking(false);
-      onComplete?.();
     }, thinkDuration);
     return () => clearTimeout(timer);
-  }, [active, thinkDuration, onComplete]);
+  }, [active, thinkDuration]);
+
+  // Clone child to pass onStageComplete callback
+  const childWithCallback = !thinking && (active || completed) && isValidElement(children)
+    ? cloneElement(children as React.ReactElement<{ onStageComplete?: () => void }>, { onStageComplete: onComplete })
+    : children;
 
   return (
     <motion.div
@@ -73,23 +79,34 @@ export default function PipelineStage({
           >
             {icon}
           </div>
-          <div className="flex items-center gap-3 flex-1">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <span className="text-xs font-mono text-muted uppercase tracking-wider">
               Stage {stageNumber}
             </span>
             <h3 className="font-heading font-bold text-lg">{title}</h3>
           </div>
-          {completed && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center justify-center w-6 h-6 rounded-full bg-success/20 text-success"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 7L6 10L11 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </motion.div>
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {timeElapsed && completed && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-[11px] font-mono text-muted/70 whitespace-nowrap"
+              >
+                ⏱ {timeElapsed}
+              </motion.span>
+            )}
+            {completed && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="flex items-center justify-center w-6 h-6 rounded-full bg-success/20 text-success"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 7L6 10L11 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </motion.div>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -113,7 +130,7 @@ export default function PipelineStage({
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="pl-[52px]"
             >
-              {children}
+              {childWithCallback}
             </motion.div>
           ) : null}
         </AnimatePresence>

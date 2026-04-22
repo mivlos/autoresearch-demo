@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Clock, UserCircle, Users, ShieldCheck, ArrowsClockwise, CurrencyDollar } from "@phosphor-icons/react";
 
 const STATS = [
-  { icon: Clock, label: "Total Time", value: "6 hours", subtext: "vs ~3 weeks traditional" },
+  { icon: Clock, label: "Total Time", value: "~11 hours", subtext: "vs ~3 weeks traditional" },
   { icon: UserCircle, label: "Researcher Time", value: "0 hrs logistics", subtext: "30 min review" },
   { icon: Users, label: "Participants", value: "30", subtext: "20 initial + 10 validation" },
   { icon: ShieldCheck, label: "Confidence", value: "95% CI", subtext: "All key metrics" },
