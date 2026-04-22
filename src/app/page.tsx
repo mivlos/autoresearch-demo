@@ -1,7 +1,9 @@
 "use client";
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import {
+  TreeStructure,
   Brain,
   UsersThree,
   PaintBrush,
@@ -212,6 +214,18 @@ export default function Home() {
           >
             <SummaryBar />
             <LoopDiagram />
+
+            {/* Architecture Link */}
+            <div className="text-center py-8">
+              <Link
+                href="/architecture"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent text-sm font-heading font-bold hover:bg-accent/20 transition-colors"
+              >
+                <TreeStructure weight="duotone" className="w-4 h-4" />
+                View Architecture
+                <span className="ml-1">&rarr;</span>
+              </Link>
+            </div>
 
             {/* Footer */}
             <div className="text-center pb-12 text-[11px] text-muted/40">
